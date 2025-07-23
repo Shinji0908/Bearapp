@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">BEARApp</string>
+    <string name="log_in">LOG IN</string>
+    <string name="barangay_194_emergency_alert_amp_response"><![CDATA[Barangay 194 Emergency Alert & Response]]></string>
+    <string name="sign_up">SIGN UP</string>
+    <string name="b_e_a_r">B.E.A.R</string>
+    <string name="login_as_residents">Login as Residents</string>
+    <string name="email_Address">Email Address</string>
+    <string name="password">Password</string>
+    <string name="logo">logo</string>
+    <string name="sign_up1">Sign Up</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="birthday">Birth Date</string>
+</resources>
