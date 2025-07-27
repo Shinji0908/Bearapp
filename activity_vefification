@@ -63,7 +63,7 @@
         android:layout_marginTop="440dp"
         android:layout_marginBottom="8dp"
         android:background="@drawable/c_button"
-        android:text="LOG OUT"
+        android:text="NEXT"
         android:textColor="#FFFFFF"
         android:textStyle="bold" />
 
