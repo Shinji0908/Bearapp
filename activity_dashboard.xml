@@ -1,33 +1,151 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/body"
     android:orientation="vertical"
-    tools:context=".dashboard"
-    android:background="@color/body">
+    tools:context=".dashboard">
 
-<androidx.constraintlayout.widget.ConstraintLayout
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_marginEnd="50dp"
-    android:layout_marginStart="50dp">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="50dp"
+        android:layout_marginEnd="50dp">
 
 
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="227dp"
-        android:layout_height="50dp"
-        android:text="adegsdgasdgadgasgasga"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.505"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.522" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text= "B.E.A.R"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.1" />
 
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardViewBarangay"
+            android:layout_width="140dp"
+            android:layout_height="150dp"
+            app:cardCornerRadius="75dp"
+            app:layout_constraintTop_toBottomOf="@id/textView2"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cardViewPolice"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            android:layout_marginTop="50dp">
+            <ImageButton
+                android:id="@+id/imageButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/barangay"
+                android:scaleType="centerCrop"
+                android:background="?android:attr/selectableItemBackgroundBorderless"/>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardViewPolice"
+            android:layout_width="140dp"
+            android:layout_height="150dp"
+            app:cardCornerRadius="70dp"
+            app:layout_constraintTop_toTopOf="@id/cardViewBarangay"
+            app:layout_constraintStart_toEndOf="@id/cardViewBarangay"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="20dp">
+            <ImageButton
+                android:id="@+id/imageButton2"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/police"
+                android:scaleType="centerCrop"
+                android:background="?android:attr/selectableItemBackgroundBorderless"/>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardViewHospital"
+            android:layout_width="140dp"
+            android:layout_height="150dp"
+            app:cardCornerRadius="75dp"
+            app:layout_constraintTop_toBottomOf="@id/cardViewBarangay"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cardViewFire"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            android:layout_marginTop="50dp">
+
+            <ImageButton
+                android:id="@+id/imageButton3"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerCrop"
+                android:src="@drawable/hospital" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardViewFire"
+            android:layout_width="140dp"
+            android:layout_height="150dp"
+            app:cardCornerRadius="75dp"
+            app:layout_constraintTop_toTopOf="@id/cardViewHospital"
+            app:layout_constraintStart_toEndOf="@id/cardViewHospital"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="20dp">
+
+            <ImageButton
+                android:id="@+id/imageButton4"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerCrop"
+                android:src="@drawable/fire" />
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/textView5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="BARANGAY"
+            app:layout_constraintEnd_toEndOf="@+id/cardViewBarangay"
+            app:layout_constraintStart_toStartOf="@+id/cardViewBarangay"
+            app:layout_constraintTop_toBottomOf="@+id/cardViewBarangay" />
+
+        <TextView
+            android:id="@+id/textView6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="POLICE"
+            app:layout_constraintEnd_toEndOf="@+id/cardViewPolice"
+            app:layout_constraintStart_toStartOf="@+id/cardViewPolice"
+            app:layout_constraintTop_toBottomOf="@+id/cardViewPolice" />
+
+        <TextView
+            android:id="@+id/textView7"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="HOSPITAL"
+            app:layout_constraintEnd_toEndOf="@+id/cardViewHospital"
+            app:layout_constraintStart_toStartOf="@+id/cardViewHospital"
+            app:layout_constraintTop_toBottomOf="@+id/cardViewHospital" />
+
+        <TextView
+            android:id="@+id/textView8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="FIRE"
+            app:layout_constraintEnd_toEndOf="@+id/cardViewFire"
+            app:layout_constraintStart_toStartOf="@+id/cardViewFire"
+            app:layout_constraintTop_toBottomOf="@+id/cardViewFire" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>
