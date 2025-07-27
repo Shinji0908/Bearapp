@@ -1,0 +1,123 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F2E2CC"
+    android:padding="24dp">
+
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentStart="true"
+            android:background="@android:color/transparent"
+            android:contentDescription="Back"
+            android:src="@drawable/ic_back_arrow" />
+
+        <TextView
+            android:id="@+id/menuTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:fontFamily="@font/b_font"
+            android:text="Personal Information"
+            android:textColor="#000000"
+            android:textSize="20sp"
+             />
+
+        <ImageButton
+            android:id="@+id/btnMenu"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentEnd="true"
+            android:background="@android:color/transparent"
+            android:contentDescription="Menu"
+            android:src="@drawable/ic_menu" />
+    </RelativeLayout>
+
+    <EditText
+        android:id="@+id/editAccount"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="First Name"
+        android:fontFamily="@font/r_font"
+        android:padding="10dp"
+        android:layout_marginTop="24dp"
+        android:textColorHint="@color/black"
+        android:background="@drawable/filler"
+
+    <EditText
+        android:id="@+id/editAccount"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Last Name"
+        android:fontFamily="@font/r_font"
+        android:padding="10dp"
+        android:layout_marginTop="24dp"
+        android:textColorHint="@color/black"
+        android:background="@drawable/filler"
+    <EditText
+        android:id="@+id/editAccount"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Address"
+        android:fontFamily="@font/r_font"
+        android:padding="10dp"
+        android:layout_marginTop="24dp"
+        android:textColorHint="@color/black"
+        android:background="@drawable/filler"
+    <EditText
+        android:id="@+id/editAccount"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Blood Type"
+        android:fontFamily="@font/r_font"
+        android:padding="10dp"
+        android:layout_marginTop="24dp"
+        android:textColorHint="@color/black"
+        android:background="@drawable/filler"
+    <EditText
+        android:id="@+id/editAccount"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Birth Date"
+        android:fontFamily="@font/r_font"
+        android:padding="10dp"
+        android:layout_marginTop="24dp"
+        android:textColorHint="@color/black"
+        android:background="@drawable/filler"
+    <EditText
+        android:id="@+id/editAccount"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Cellphone Number"
+        android:fontFamily="@font/r_font"
+        android:padding="10dp"
+        android:layout_marginTop="24dp"
+        android:textColorHint="@color/black"
+        android:background="@drawable/filler"/>
+
+
+
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/c_button"
+        android:text="NEXT"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold" />
+
+</LinearLayout>
