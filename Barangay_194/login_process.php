@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Set session variables for user
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['user_type'] = 'User'; // Specify the user type as 'User'
-            header("Location: dashboard.php"); // Redirect to user dashboard
+            header("Location: dashboard.html"); // Redirect to user dashboard
             exit();
         } else {
             echo "Invalid password.";
