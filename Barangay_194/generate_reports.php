@@ -2,35 +2,9 @@
 include 'db_connection.php';
 session_start();
 
-// Ensure the user is logged in and is an Admin
+// Check if the admin is logged in
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'Admin') {
-    header("Location: index.php"); // Redirect to login if unauthorized
-    exit();
-}
-
-// Get the user ID from the URL
-$user_id = $_GET['id'];
-
-// Fetch the user's details to pre-fill the form
-$sql = "SELECT * FROM users WHERE user_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param('i', $user_id);
-$stmt->execute();
-$user_result = $stmt->get_result();
-$user = $user_result->fetch_assoc();
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitize and get the new password
-    $new_password = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
-
-    // Update the password in the database
-    $update_sql = "UPDATE users SET password = ? WHERE user_id = ?";
-    $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param('si', $new_password, $user_id);
-    $update_stmt->execute();
-
-    // Redirect back to the users list page with a success message
-    header("Location: view_all_users.php?password_updated=true");
+    header("Location: index.php"); // Redirect to user login
     exit();
 }
 ?>
@@ -40,15 +14,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit User Password</title>
-        <style>
+    <title>Admin Dashboard</title>
+    <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
         }
-        .Bear img {
+        .Barangay img {
         width: 150px; 
         height: auto; 
         margin-left: 30px;
@@ -98,16 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cursor: pointer;
             width: 200px;
         }
-         .upd-btn {
-            bottom: 50px;
-            left: 20px;
-            padding: 10px;
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            cursor: pointer;
-            width: 200px;
-         }
 
         .logout-btn:hover {
             background-color: #c0392b;
@@ -115,10 +79,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
+
     <div class="sidebar">
-        <div class="Bear">
+    <div class="Barangay">
             <a href="admin_dashboard.php">
-            <img src="Applogo.png" alt="Bear Logo">
+            <img src="Applogo.png" alt="Barangay Logo">
         </div>
         <ul>
             <li><a href="manage_accounts.php">Manage Accounts</a></li> 
@@ -128,20 +93,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <li><a href="incidents_data.php">Incidents Data</a></li> 
             <li><a href="activity_logs.php">Activity Logs</a></li>
             <li><a href="generate_reports.php">Generate Reports</a></li>
+        </ul>
+        
         <form action="logout.php" method="POST">
-            <button class="logout-btn">Logout</button>
+            <button type="submit" class="logout-btn">Logout</button>
         </form>
     </div>
 
     <div class="main-content">
-        <h1>Edit Password for User: <?= htmlspecialchars($user['email']) ?></h1>
-        <form action="" method="POST">
-            <label for="new_password">New Password:</label>
-            <input type="password" name="new_password" id="new_password" required>
-            <br><br>
-            <button class="upd-btn" type="submit">Update Password</button>
-        </form>
     </div>
 </body>
 </html>
-<?php $conn->close(); ?>

@@ -29,10 +29,23 @@ $spouse_age = isset($_POST['spouse_age']) ? (int)$_POST['spouse_age'] : 0;
 $spouse_birthday = isset($_POST['spouse_birthday']) ? $_POST['spouse_birthday'] : '';
 $spouse_address = isset($_POST['spouse_address']) ? $_POST['spouse_address'] : '';
 $spouse_work = isset($_POST['spouse_work']) ? $_POST['spouse_work'] : '';
-$child_name = isset($_POST['child_name']) ? $_POST['child_name'] : '';
-$child_age = isset($_POST['child_age']) ? (int)$_POST['child_age'] : 0;
-$child_grade_degree = isset($_POST['child_grade_degree']) ? $_POST['child_grade_degree'] : '';
-$profile_status = 'Pending'; // Set profile status to Pending
+
+$children_names = isset($_POST['child_name']) ? $_POST['child_name'] : [];
+$children_ages = isset($_POST['child_age']) ? $_POST['child_age'] : [];
+$children_grades = isset($_POST['child_grade_degree']) ? $_POST['child_grade_degree'] : [];
+$profile_status = 'Pending'; 
+
+// Insert child data
+foreach ($child_names as $index => $child_name) {
+    $child_age = isset($child_ages[$index]) ? $child_ages[$index] : 0;
+    $child_grade_degree = isset($child_degrees[$index]) ? $child_degrees[$index] : '';
+
+    $sql_child = "INSERT INTO Children (user_id, child_name, child_age, child_grade_degree) VALUES (?, ?, ?, ?)";
+    $stmt_child = $conn->prepare($sql_child);
+    $stmt_child->bind_param("isis", $user_id, $child_name, $child_age, $child_grade_degree);
+    $stmt_child->execute();
+    $stmt_child->close();
+}
 
 // Update the user's profile in ResidentProfiles
 $sql_check = "SELECT * FROM ResidentProfiles WHERE user_id = ?";
@@ -138,6 +151,6 @@ $stmt_user->execute();
 $stmt_user->close();
 
 $_SESSION['success_message'] = "Upload complete. Please wait for admin approval.";
-header("Location: dashboard.php"); // Redirect to dashboard
+header("Location: dashboard.html"); // Redirect to dashboard
 exit();
 ?>

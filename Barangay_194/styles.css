@@ -109,7 +109,7 @@ input {
     text-decoration: underline;
 }
 
-.Barangay {
+.App {
     flex: 1;
     background-color: #e8e4f8;
     display: flex;
@@ -117,6 +117,6 @@ input {
     align-items: center;
 }
 
-.Barangay img {
+.App img {
     width: 70%;
 }

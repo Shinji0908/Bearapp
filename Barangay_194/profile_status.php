@@ -34,74 +34,21 @@ $stmt->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile Status</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background-color: #fff;
+            margin-left: 250px;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
         }
-        .status {
-            font-size: 1.5em;
-            margin: 20px 0;
-        }
-        .status.pending {
-            color: orange;
-        }
-        .status.approved {
-            color: green;
-        }
-        .status.rejected {
-            color: red;
-        }
-        .icon {
-            font-size: 3em;
-            margin-bottom: 10px;
-        }
-        .back-button {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 1em;
-            color: #fff;
-            background-color: #007bff;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .back-button:hover {
-            background-color: #0056b3;
+        h1 {
+            color: #2c3e50;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="icon">
-            <?php if ($document_status == 'Approved'): ?>
-                <i class="fas fa-check-circle" style="color: green;"></i>
-            <?php elseif ($document_status == 'Rejected'): ?>
-                <i class="fas fa-times-circle" style="color: red;"></i>
-            <?php else: ?>
-                <i class="fas fa-hourglass-half" style="color: orange;"></i>
-            <?php endif; ?>
-        </div>
-        <div class="status <?php echo strtolower($document_status); ?>">
-            <?php echo $document_status; ?>
-        </div>
-        <a href="dashboard.php" class="back-button">Back to Dashboard</a>
-    </div>
+    <h1>Your Profile Status</h1>
+    <p>Your profile approval status: <strong><?php echo htmlspecialchars($document_status); ?></strong></p>
+
+    <a href="dashboard.html">Back to Dashboard</a>
 </body>
 </html>
