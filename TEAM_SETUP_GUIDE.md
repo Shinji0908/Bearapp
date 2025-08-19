@@ -131,5 +131,5 @@ npm install
 - **Database:** MongoDB on localhost:27017
 
 ---
-*Last updated: [Current Date]*
-*For questions, contact: [Your Contact Info]*
+*Last updated: *8/19/2025**
+*For questions, contact: CONTACT ME BITCH ASS NIGGASSS*
