@@ -1,0 +1,11 @@
+{
+  "name": "bear-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run start --prefix bear-backend\" \"npm run start --prefix bear-frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}
