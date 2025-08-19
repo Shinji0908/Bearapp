@@ -37,43 +37,141 @@ BEAR-SYSTEM/
 - Node.js (v14 or higher)
 - npm or yarn
 - MongoDB (for backend)
+- Git
 
-### Installation
+### For Team Members: How to Access and Set Up the Project
 
-1. **Clone the repository**
+#### Step 1: Clone the Repository
+```bash
+# Clone the repository to your local machine
+git clone https://github.com/yourusername/BEAR-SYSTEM.git
+cd BEAR-SYSTEM
+```
+
+#### Step 2: Install Dependencies
+
+**Backend Setup:**
+```bash
+cd bear-backend
+npm install
+```
+
+**Frontend Setup:**
+```bash
+cd ../bear-frontend
+npm install
+```
+
+#### Step 3: Environment Configuration
+
+**Backend Environment (.env file in bear-backend folder):**
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/bear-system
+JWT_SECRET=your-secret-key-here
+NODE_ENV=development
+```
+
+**Frontend Environment (.env file in bear-frontend folder):**
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_ENV=development
+```
+
+#### Step 4: Database Setup
+1. Install MongoDB on your machine
+2. Start MongoDB service
+3. Create a database named `bear-system`
+
+#### Step 5: Start Development Servers
+
+**Terminal 1 - Backend:**
+```bash
+cd bear-backend
+npm start
+# Server will run on http://localhost:5000
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd bear-frontend
+npm start
+# React app will run on http://localhost:3000
+```
+
+### Team Collaboration Workflow
+
+#### Making Changes
+1. **Create a new branch for your feature:**
    ```bash
-   git clone <your-repository-url>
-   cd BEAR-SYSTEM
+   git checkout -b feature/your-feature-name
    ```
 
-2. **Install backend dependencies**
+2. **Make your changes and commit:**
    ```bash
-   cd bear-backend
-   npm install
+   git add .
+   git commit -m "Add: description of your changes"
    ```
 
-3. **Install frontend dependencies**
+3. **Push your branch to GitHub:**
    ```bash
-   cd ../bear-frontend
-   npm install
+   git push origin feature/your-feature-name
    ```
 
-4. **Set up environment variables**
-   Create `.env` files in both `bear-backend` and `bear-frontend` directories with appropriate configuration.
+4. **Create a Pull Request** on GitHub to merge your changes
 
-5. **Start the development servers**
+#### Updating Your Local Repository
+```bash
+# Switch to main branch
+git checkout main
 
-   **Backend:**
-   ```bash
-   cd bear-backend
-   npm start
-   ```
+# Pull latest changes
+git pull origin main
 
-   **Frontend:**
-   ```bash
-   cd bear-frontend
-   npm start
-   ```
+# Delete old feature branch (optional)
+git branch -d feature/your-feature-name
+```
+
+### Troubleshooting
+
+#### Common Issues:
+1. **Port already in use:**
+   - Backend: Change PORT in .env file
+   - Frontend: React will automatically suggest an alternative port
+
+2. **MongoDB connection failed:**
+   - Ensure MongoDB is running
+   - Check MONGODB_URI in .env file
+
+3. **Dependencies not found:**
+   - Delete node_modules folder and package-lock.json
+   - Run `npm install` again
+
+4. **Git authentication issues:**
+   - Set up SSH keys or use GitHub CLI
+   - Or use personal access token for HTTPS
+
+### Development Guidelines
+
+1. **Code Style:**
+   - Use consistent indentation
+   - Follow existing naming conventions
+   - Add comments for complex logic
+
+2. **Commit Messages:**
+   - Use clear, descriptive messages
+   - Start with action words: Add, Fix, Update, Remove
+
+3. **Testing:**
+   - Test your changes before committing
+   - Ensure both frontend and backend work together
+
+### Access Points
+
+- **Frontend Application:** http://localhost:3000
+- **Backend API:** http://localhost:5000
+- **API Documentation:** http://localhost:5000/api-docs (if available)
+- **GitHub Repository:** https://github.com/yourusername/BEAR-SYSTEM
 
 ## Available Scripts
 
