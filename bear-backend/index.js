@@ -12,7 +12,9 @@ app.use(express.json());
 
 // Routes
 app.use('/api/incidents', require('./routes/incidents'));
-app.use("/api/users", require("./routes/users"));
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/admin", require("./routes/admin"));
+
 
 // MongoDB connect
 mongoose.connect(process.env.MONGO_URI)
