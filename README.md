@@ -44,7 +44,7 @@ BEAR-SYSTEM/
 #### Step 1: Clone the Repository
 ```bash
 # Clone the repository to your local machine
-git clone https://github.com/yourusername/BEAR-SYSTEM.git
+git clone https://github.com/Shinji0908/BEAR-SYSTEM.git
 cd BEAR-SYSTEM
 ```
 
@@ -203,10 +203,3 @@ git branch -d feature/your-feature-name
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support, email support@bearsystem.com or create an issue in this repository.

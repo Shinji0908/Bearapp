@@ -9,10 +9,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.url} - Headers:`, req.headers);
+  next();
+});
+
 
 // Routes
 app.use('/api/incidents', require('./routes/incidents'));
-app.use("/api/users", require("./routes/users"));
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/admin", require("./routes/admin"));
+
 
 // MongoDB connect
 mongoose.connect(process.env.MONGO_URI)
