@@ -1,20 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { 
   Box, 
   List, 
   ListItem, 
   ListItemText, 
   Typography, 
-  AppBar, 
-  Toolbar, 
+  AppBar,
+  Toolbar,
   IconButton,
-  Chip
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  Snackbar,
+  Alert
 } from "@mui/material";
-import { ArrowBack, Refresh } from "@mui/icons-material";
+import { ArrowBack, Refresh, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { io } from "socket.io-client";
 
 // Fix marker icons (Leaflet bug with Webpack)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -37,6 +46,10 @@ function Incidents() {
   const [incidents, setIncidents] = useState([]);
   const [selectedIncident, setSelectedIncident] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [incidentToDelete, setIncidentToDelete] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const socketRef = useRef(null);
   const navigate = useNavigate();
 
   const normalizeType = (t) => (typeof t === "string" ? t.toLowerCase() : "barangay");
@@ -72,7 +85,6 @@ function Incidents() {
     fetch("http://localhost:5000/api/incidents")
       .then((res) => res.json())
       .then((data) => {
-        // Ensure we always store an array to safely use .map in render
         const normalized = Array.isArray(data)
           ? data
           : Array.isArray(data?.incidents)
@@ -90,14 +102,118 @@ function Incidents() {
       });
   };
 
+  const handleDeleteClick = (incident, event) => {
+    event.stopPropagation(); // Prevent list item selection
+    setIncidentToDelete(incident);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!incidentToDelete) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/incidents/${incidentToDelete._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Remove from local state
+        setIncidents(prev => prev.filter(incident => incident._id !== incidentToDelete._id));
+        
+        // Clear selection if deleted incident was selected
+        if (selectedIncident?._id === incidentToDelete._id) {
+          setSelectedIncident(null);
+        }
+        
+        setSnackbar({
+          open: true,
+          message: "Incident deleted successfully",
+          severity: "success"
+        });
+      } else {
+        const errorData = await response.json();
+        setSnackbar({
+          open: true,
+          message: errorData.message || "Failed to delete incident",
+          severity: "error"
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting incident:", error);
+      setSnackbar({
+        open: true,
+        message: "Network error. Please try again.",
+        severity: "error"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setIncidentToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setIncidentToDelete(null);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
   useEffect(() => {
     fetchIncidents();
   }, []);
 
+  // Socket.IO: connect and subscribe to global updates
+  useEffect(() => {
+    const socket = io(process.env.REACT_APP_SOCKET_URL || "http://localhost:5000", { transports: ["websocket"] });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("✅ Socket connected", socket.id);
+    });
+
+    // New incident arrives in real-time
+    socket.on("incidentCreated", ({ incident }) => {
+      setIncidents((prev) => (prev.some((i) => i._id === incident._id) ? prev : [incident, ...prev]));
+    });
+
+    // Real-time status updates
+    socket.on("incidentStatusUpdated", ({ incident }) => {
+      setIncidents((prev) =>
+        prev.map((i) => (i._id === incident._id ? incident : i))
+      );
+      // Update selected incident if it's the one being updated
+      setSelectedIncident((prev) => 
+        prev?._id === incident._id ? incident : prev
+      );
+    });
+
+    // Handle incident deletion from other clients
+    socket.on("incidentDeleted", ({ incidentId }) => {
+      setIncidents((prev) => prev.filter((i) => i._id !== incidentId));
+      // Clear selection if deleted incident was selected
+      setSelectedIncident((prev) => prev?._id === incidentId ? null : prev);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("🔌 Socket disconnected:", reason);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   return (
-    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      {/* Header */}
-      <AppBar position="static" sx={{ backgroundColor: "#2c3e50" }}>
+    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", backgroundColor: "var(--bear-body)" }}>
+      {/* Red Top Bar */}
+      <AppBar position="static" sx={{ backgroundColor: "var(--bear-dark-red)", borderRadius: 0 }}>
         <Toolbar>
           <IconButton
             edge="start"
@@ -107,7 +223,7 @@ function Incidents() {
           >
             <ArrowBack />
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "var(--bear-white)" }}>
             🚨 Emergency Incidents
           </Typography>
           <IconButton color="inherit" onClick={fetchIncidents}>
@@ -123,7 +239,8 @@ function Incidents() {
           sx={{
             width: "35%",
             overflowY: "auto",
-            borderRight: "1px solid #ddd",
+            borderRight: "1px solid var(--bear-semiwhite)",
+            backgroundColor: "var(--bear-white)",
             p: 2,
           }}
         >
@@ -138,7 +255,7 @@ function Incidents() {
             )}
             {incidents.map((incident, index) => (
               <ListItem
-                key={index}
+                key={incident._id || index}
                 divider
                 button
                 onClick={() => setSelectedIncident(incident)}
@@ -146,13 +263,30 @@ function Incidents() {
                   backgroundColor:
                     selectedIncident?._id === incident._id ? "#d1e7ff" : "inherit",
                 }}
+                secondaryAction={
+                  <IconButton
+                    edge="end"
+                    aria-label="delete"
+                    onClick={(e) => handleDeleteClick(incident, e)}
+                    sx={{ color: "error.main" }}
+                  >
+                    <Delete />
+                  </IconButton>
+                }
               >
                 <ListItemText
-                  primary={`${incident.name} (${incident.contact})`}
+                  primary={`${incident.name}${incident.reportedBy ? ` (${incident.reportedBy.firstName || 'Unknown'} ${incident.reportedBy.lastName || 'User'})` : ` (${incident.contact})`}${incident.status ? ` • ${incident.status}` : ""}`}
                   secondary={
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Chip size="small" variant="filled" {...getTypeChipProps(incident.type)} />
-                      <span>{`📍 ${incident.location?.latitude}, ${incident.location?.longitude}`}</span>
+                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Chip size="small" variant="filled" {...getTypeChipProps(incident.type)} />
+                        <span>{`📍 ${incident.location?.latitude || 'N/A'}, ${incident.location?.longitude || 'N/A'}`}</span>
+                      </Box>
+                      {incident.description && (
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', mt: 0.5 }}>
+                          📝 {incident.description.length > 80 ? incident.description.substring(0, 80) + '...' : incident.description}
+                        </Typography>
+                      )}
                     </Box>
                   }
                 />
@@ -162,7 +296,7 @@ function Incidents() {
         </Box>
 
         {/* Right Column - Map */}
-        <Box sx={{ flex: 1 }}>
+        <Box sx={{ flex: 1, backgroundColor: "var(--bear-white)" }}>
           <MapContainer
             center={[14.5995, 120.9842]} // Default center (Manila)
             zoom={12}
@@ -173,7 +307,7 @@ function Incidents() {
             {/* Show all markers */}
             {incidents.map((incident, index) => (
               <Marker
-                key={index}
+                key={incident._id || index}
                 position={[
                   incident.location?.latitude || 14.5995,
                   incident.location?.longitude || 120.9842,
@@ -184,7 +318,27 @@ function Incidents() {
                   <br />
                   Type: {getTypeChipProps(incident.type).label}
                   <br />
-                  📞 {incident.contact}
+                  {incident.reportedBy ? (
+                    <>
+                      👤 {incident.reportedBy.firstName || 'Unknown'} {incident.reportedBy.lastName || 'User'}
+                      <br />
+                      📞 {incident.reportedBy.contact || incident.contact}
+                    </>
+                  ) : (
+                    <>📞 {incident.contact}</>
+                  )}
+                  {incident.description && (
+                    <>
+                      <br />
+                      📝 {incident.description}
+                    </>
+                  )}
+                  {incident.status ? (
+                    <>
+                      <br />
+                      Status: {incident.status}
+                    </>
+                  ) : null}
                 </Popup>
               </Marker>
             ))}
@@ -194,6 +348,44 @@ function Incidents() {
           </MapContainer>
         </Box>
       </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Delete Incident
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete the incident "{incidentToDelete?.name}"? 
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success/Error Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -5,28 +5,19 @@ import {
   Card,
   CardContent,
   Grid,
-  AppBar,
-  Toolbar,
-  Button,
-  Avatar,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
 } from "@mui/material";
 import {
-  AccountCircle,
-  ExitToApp,
   Dashboard as DashboardIcon,
   Emergency,
   People,
   Settings,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import DashboardSidebar from "../components/DashboardSidebar";
+import NotificationHistory from "../components/NotificationHistory";
 
 function Dashboard() {
   const [user, setUser] = useState(null);
-  const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,14 +38,6 @@ function Dashboard() {
     }
   }, [navigate]);
 
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -69,177 +52,97 @@ function Dashboard() {
     );
   }
 
-  const displayName = (user.username || `${user.firstName || ""} ${user.lastName || ""}`.trim()).trim();
-  const avatarInitial = displayName && displayName.length > 0 ? displayName[0] : "?";
 
   const dashboardCards = [
     {
       title: "Active Incidents",
       value: "12",
       icon: <Emergency sx={{ fontSize: 40 }} />,
-      color: "#f44336",
+      color: "var(--bear-red)",
       description: "Emergency incidents requiring attention",
     },
     {
       title: "Total Residents",
       value: "1,234",
       icon: <People sx={{ fontSize: 40 }} />,
-      color: "#2196f3",
+      color: "var(--bear-blue)",
       description: "Registered residents in the system",
     },
     {
       title: "Responders",
       value: "45",
       icon: <Settings sx={{ fontSize: 40 }} />,
-      color: "#4caf50",
+      color: "var(--bear-status-approved)",
       description: "Active emergency responders",
     },
     {
       title: "Response Time",
       value: "3.2 min",
       icon: <DashboardIcon sx={{ fontSize: 40 }} />,
-      color: "#ff9800",
+      color: "var(--bear-yellow)",
       description: "Average emergency response time",
     },
   ];
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      {/* Top Navigation */}
-      <AppBar position="static" sx={{ backgroundColor: "#2c3e50" }}>
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            🚨 BEAR System Dashboard
+    <Box sx={{ display: "flex", height: "100vh" }}>
+      {/* Sidebar */}
+      <DashboardSidebar user={user} onLogout={handleLogout} />
+
+      {/* Main Content Area */}
+      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+        {/* Main Content */}
+        <Box sx={{ p: 3, flex: 1, overflow: "auto", backgroundColor: "var(--bear-body)" }}>
+          <Typography variant="h4" gutterBottom sx={{ mb: 4, color: "var(--bear-blue)", fontWeight: "bold" }}>
+            Barangay Emergency Management Dashboard
           </Typography>
-          
-          <Typography variant="body2" sx={{ mr: 2 }}>
-            Welcome, {displayName}
-          </Typography>
-          
-          <Button
-            color="inherit"
-            onClick={handleMenuOpen}
-            startIcon={<Avatar sx={{ width: 24, height: 24 }}>{avatarInitial}</Avatar>}
-          >
-            {user.role}
-          </Button>
-          
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-          >
-            <MenuItem onClick={handleMenuClose}>
-              <ListItemIcon>
-                <AccountCircle fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Profile</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={handleLogout}>
-              <ListItemIcon>
-                <ExitToApp fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Logout</ListItemText>
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
 
-      {/* Main Content */}
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom sx={{ mb: 4, color: "#2c3e50" }}>
-          Emergency Management Dashboard
-        </Typography>
+          {/* Live Notifications */}
+          <NotificationHistory />
 
-        {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {dashboardCards.map((card, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card
-                sx={{
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  transition: "transform 0.2s ease-in-out",
-                  "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow: 4,
-                  },
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1, textAlign: "center" }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      mb: 2,
-                      color: card.color,
-                    }}
-                  >
-                    {card.icon}
-                  </Box>
-                  <Typography variant="h4" component="div" sx={{ fontWeight: "bold", mb: 1 }}>
-                    {card.value}
-                  </Typography>
-                  <Typography variant="h6" component="div" sx={{ mb: 1, color: "#2c3e50" }}>
-                    {card.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {card.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Quick Actions */}
-        <Card sx={{ mt: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-              Quick Actions
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  sx={{ py: 1.5, backgroundColor: "#f44336" }}
-                  onClick={() => navigate("/incidents")}
+          {/* Stats Cards */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {dashboardCards.map((card, index) => (
+              <Grid item xs={12} sm={6} md={3} key={index}>
+                <Card
+                  className="bear-card"
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    transition: "transform 0.2s ease-in-out",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: 4,
+                    },
+                  }}
                 >
-                  View Incidents
-                </Button>
+                  <CardContent sx={{ flexGrow: 1, textAlign: "center" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        mb: 2,
+                        color: card.color,
+                      }}
+                    >
+                      {card.icon}
+                    </Box>
+                    <Typography variant="h4" component="div" sx={{ fontWeight: "bold", mb: 1 }}>
+                      {card.value}
+                    </Typography>
+                    <Typography variant="h6" component="div" sx={{ mb: 1, color: "var(--bear-blue)", fontWeight: "bold" }}>
+                      {card.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "var(--bear-black)" }}>
+                      {card.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  sx={{ py: 1.5, backgroundColor: "#2196f3" }}
-                >
-                  Manage Residents
-                </Button>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  sx={{ py: 1.5, backgroundColor: "#4caf50" }}
-                >
-                  Responders
-                </Button>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  sx={{ py: 1.5, backgroundColor: "#ff9800" }}
-                >
-                  Reports
-                </Button>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+            ))}
+          </Grid>
+        </Box>
       </Box>
     </Box>
   );

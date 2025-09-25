@@ -9,6 +9,10 @@ const IncidentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  description: {
+    type: String,
+    required: false, // Optional field
+  },
   // High-level emergency category (limited to LGU responders)
   type: {
     type: String,

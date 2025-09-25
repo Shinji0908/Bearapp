@@ -46,26 +46,24 @@ import {
   Phone,
   Cake,
   Refresh,
-  Verified,
-  Warning,
-  CheckCircle,
-  Cancel,
 } from "@mui/icons-material";
 import { 
   getVerificationStatusColor, 
+  getVerificationStatusIcon, 
   isUserVerified
 } from '../utils/verificationUtils';
 import { useNavigate } from "react-router-dom";
 
-function Responders() {
-  const [responders, setResponders] = useState([]);
+function Users() {
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [openDialog, setOpenDialog] = useState(false);
-  const [editingResponder, setEditingResponder] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedResponder, setSelectedResponder] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const navigate = useNavigate();
 
@@ -77,18 +75,17 @@ function Responders() {
     email: "",
     contact: "",
     birthday: "",
-    role: "Responder",
+    role: "Resident",
     responderType: "",
     password: "",
-    verificationStatus: "pending",
-    verificationNotes: "",
   });
 
-  // Fetch responders data
-  const fetchResponders = useCallback(async () => {
+  // Fetch users data
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
+      console.log("🔍 Fetching users with token:", token ? "Present" : "Missing");
       
       const response = await fetch("http://localhost:5000/api/users", {
         headers: {
@@ -96,17 +93,33 @@ function Responders() {
         },
       });
       
+      console.log("📡 Response status:", response.status);
+      
       if (response.ok) {
-        const data = await response.json();
-        // Filter only responders
-        const responderData = data.filter(user => user.role === "Responder");
-        console.log("Fetched responders:", responderData); // Debug log
-        setResponders(responderData);
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          console.log("📊 Received data:", data);
+          setUsers(data);
+        } else {
+          const text = await response.text();
+          console.error("❌ Received non-JSON response:", text);
+          throw new Error("Server returned invalid response format");
+        }
       } else {
-        throw new Error("Failed to fetch responders");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          console.error("❌ Error response:", errorData);
+          throw new Error(errorData.message || "Failed to fetch users");
+        } else {
+          const text = await response.text();
+          console.error("❌ Error response (non-JSON):", text);
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
       }
     } catch (error) {
-      console.error("Error fetching responders:", error);
+      console.error("Error fetching users:", error);
       showSnackbar(error.message, "error");
     } finally {
       setLoading(false);
@@ -114,32 +127,22 @@ function Responders() {
   }, []);
 
   useEffect(() => {
-    fetchResponders();
-  }, [fetchResponders]);
+    fetchUsers();
+  }, [fetchUsers]);
 
-  // Filter responders based on search and status
-  const filteredResponders = responders.filter((responder) => {
-    // Handle empty search term - show all if no search
-    const matchesSearch = searchTerm === "" || 
-      (responder.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       responder.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       responder.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       responder.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       responder.responderType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       `${responder.firstName || ''} ${responder.lastName || ''}`.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Filter users based on search, role, and status
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = 
+      user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = filterStatus === "all" || responder.verificationStatus === filterStatus;
+    const matchesRole = filterRole === "all" || user.role === filterRole;
+    const matchesStatus = filterStatus === "all" || user.verificationStatus === filterStatus;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesRole && matchesStatus;
   });
-
-  // Debug logging for search functionality
-  useEffect(() => {
-    console.log("Search term:", searchTerm);
-    console.log("Filter status:", filterStatus);
-    console.log("Total responders:", responders.length);
-    console.log("Filtered responders:", filteredResponders.length);
-  }, [searchTerm, filterStatus, responders, filteredResponders]);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -150,54 +153,22 @@ function Responders() {
     }));
   };
 
-  // Handle verification
-  const handleVerification = async (responderId, status, notes = "") => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5000/api/users/${responderId}/verify`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          verificationStatus: status,
-          verificationNotes: notes,
-        }),
-      });
-
-      if (response.ok) {
-        showSnackbar(
-          `Responder ${status === "verified" ? "verified" : "rejected"} successfully`,
-          "success"
-        );
-        fetchResponders();
-      } else {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update verification status");
-      }
-    } catch (error) {
-      console.error("Error updating verification:", error);
-      showSnackbar(error.message, "error");
-    }
-  };
-
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      const url = editingResponder 
-        ? `http://localhost:5000/api/users/${editingResponder._id}`
+      const url = editingUser 
+        ? `http://localhost:5000/api/users/${editingUser._id}`
         : "http://localhost:5000/api/users";
       
-      const method = editingResponder ? "PUT" : "POST";
+      const method = editingUser ? "PUT" : "POST";
       
       // Prepare data for submission
       const submitData = { ...formData };
       
       // For editing, only include password if it's provided
-      if (editingResponder && !submitData.password) {
+      if (editingUser && !submitData.password) {
         delete submitData.password;
       }
       
@@ -212,28 +183,28 @@ function Responders() {
 
       if (response.ok) {
         showSnackbar(
-          editingResponder ? "Responder updated successfully" : "Responder created successfully",
+          editingUser ? "User updated successfully" : "User created successfully",
           "success"
         );
         setOpenDialog(false);
         resetForm();
-        fetchResponders();
+        fetchUsers();
       } else {
         const error = await response.json();
-        throw new Error(error.message || "Failed to save responder");
+        throw new Error(error.message || "Failed to save user");
       }
     } catch (error) {
-      console.error("Error saving responder:", error);
+      console.error("Error saving user:", error);
       showSnackbar(error.message, "error");
     }
   };
 
-  // Handle delete responder
-  const handleDelete = async (responderId) => {
-    if (window.confirm("Are you sure you want to delete this responder?")) {
+  // Handle delete user
+  const handleDelete = async (userId) => {
+    if (window.confirm("Are you sure you want to delete this user?")) {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`http://localhost:5000/api/users/${responderId}`, {
+        const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -241,51 +212,46 @@ function Responders() {
         });
 
         if (response.ok) {
-          showSnackbar("Responder deleted successfully", "success");
-          fetchResponders();
+          showSnackbar("User deleted successfully", "success");
+          fetchUsers();
         } else {
-          throw new Error("Failed to delete responder");
+          throw new Error("Failed to delete user");
         }
       } catch (error) {
-        console.error("Error deleting responder:", error);
-        showSnackbar("Failed to delete responder", "error");
+        console.error("Error deleting user:", error);
+        showSnackbar("Failed to delete user", "error");
       }
     }
   };
 
-  // Reset form
-  const resetForm = () => {
-    setFormData({
-      firstName: "",
-      lastName: "",
-      username: "",
-      email: "",
-      contact: "",
-      birthday: "",
-      role: "Responder",
-      responderType: "",
-      password: "",
-      verificationStatus: "pending",
-      verificationNotes: "",
-    });
-    setEditingResponder(null);
-  };
-
+// Reset form
+const resetForm = () => {
+  setFormData({
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    contact: "",
+    birthday: "",
+    role: "Resident",
+    responderType: "",
+    password: "",
+  });
+  setEditingUser(null);
+};
   // Open edit dialog
-  const handleEdit = (responder) => {
-    setEditingResponder(responder);
+  const handleEdit = (user) => {
+    setEditingUser(user);
     setFormData({
-      firstName: responder.firstName || "",
-      lastName: responder.lastName || "",
-      username: responder.username || "",
-      email: responder.email || "",
-      contact: responder.contact || "",
-      birthday: responder.birthday ? responder.birthday.split('T')[0] : "",
-      role: responder.role || "Responder",
-      responderType: responder.responderType || "",
-      password: "",
-      verificationStatus: responder.verificationStatus || "pending",
-      verificationNotes: responder.verificationNotes || "",
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      username: user.username || "",
+      email: user.email || "",
+      contact: user.contact || "",
+      birthday: user.birthday ? user.birthday.split('T')[0] : "",
+      role: user.role || "Resident",
+      responderType: user.responderType || "",
+      password: "", // ✅ keep empty when editing
     });
     setOpenDialog(true);
   };
@@ -297,14 +263,14 @@ function Responders() {
   };
 
   // Handle menu actions
-  const handleMenuOpen = (event, responder) => {
+  const handleMenuOpen = (event, user) => {
     setAnchorEl(event.currentTarget);
-    setSelectedResponder(responder);
+    setSelectedUser(user);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setSelectedResponder(null);
+    setSelectedUser(null);
   };
 
   // Show snackbar
@@ -312,7 +278,15 @@ function Responders() {
     setSnackbar({ open: true, message, severity });
   };
 
-  // ✅ Using utility functions from verificationUtils.js
+  // Get role color
+  const getRoleColor = (role) => {
+    switch (role) {
+      case "Admin": return "error";
+      case "Responder": return "warning";
+      case "Resident": return "primary";
+      default: return "default";
+    }
+  };
 
   // Get responder type color
   const getResponderTypeColor = (type) => {
@@ -324,6 +298,8 @@ function Responders() {
       default: return "default";
     }
   };
+
+  // ✅ Using utility functions from verificationUtils.js
 
   // Format date
   const formatDate = (dateString) => {
@@ -349,7 +325,7 @@ function Responders() {
   if (currentUser.role !== "Admin") {
     return (
       <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-        <AppBar position="static" sx={{ backgroundColor: "var(--bear-dark-red)", borderRadius: 0 }}>
+        <AppBar position="static" sx={{ backgroundColor: "#2c3e50" }}>
           <Toolbar>
             <IconButton
               edge="start"
@@ -360,7 +336,7 @@ function Responders() {
               <ArrowBack />
             </IconButton>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              🚨 Responder Management
+              �� Manage Users
             </Typography>
           </Toolbar>
         </AppBar>
@@ -369,7 +345,10 @@ function Responders() {
             Access Denied
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            You need Admin privileges to access the responder management page.
+            You need Admin privileges to access the user management page.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Current role: {currentUser.role || "Unknown"}
           </Typography>
         </Box>
       </Box>
@@ -377,9 +356,9 @@ function Responders() {
   }
 
   return (
-    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      {/* Header */}
-      <AppBar position="static" sx={{ backgroundColor: "#2c3e50" }}>
+    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", backgroundColor: "var(--bear-body)" }}>
+      {/* Red Top Bar */}
+      <AppBar position="static" sx={{ backgroundColor: "var(--bear-dark-red)", borderRadius: 0 }}>
         <Toolbar>
           <IconButton
             edge="start"
@@ -389,10 +368,10 @@ function Responders() {
           >
             <ArrowBack />
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            🚨 Responder Management
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "var(--bear-white)" }}>
+            👥 Manage Users
           </Typography>
-          <IconButton color="inherit" onClick={fetchResponders}>
+          <IconButton color="inherit" onClick={fetchUsers}>
             <Refresh />
           </IconButton>
         </Toolbar>
@@ -406,10 +385,10 @@ function Responders() {
             <Card>
               <CardContent sx={{ textAlign: "center" }}>
                 <Typography variant="h4" color="primary">
-                  {responders.length}
+                  {users.length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Total Responders
+                  Total Users
                 </Typography>
               </CardContent>
             </Card>
@@ -418,10 +397,10 @@ function Responders() {
             <Card>
               <CardContent sx={{ textAlign: "center" }}>
                 <Typography variant="h4" color="success.main">
-                  {responders.filter(r => isUserVerified(r.verificationStatus)).length}
+                  {users.filter(u => isUserVerified(u.verificationStatus)).length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Verified
+                  Verified Users
                 </Typography>
               </CardContent>
             </Card>
@@ -430,10 +409,10 @@ function Responders() {
             <Card>
               <CardContent sx={{ textAlign: "center" }}>
                 <Typography variant="h4" color="warning.main">
-                  {responders.filter(r => r.verificationStatus === "Pending").length}
+                  {users.filter(u => u.verificationStatus === "Pending" || u.verificationStatus === null).length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Pending
+                  Pending Verification
                 </Typography>
               </CardContent>
             </Card>
@@ -442,10 +421,10 @@ function Responders() {
             <Card>
               <CardContent sx={{ textAlign: "center" }}>
                 <Typography variant="h4" color="error.main">
-                  {responders.filter(r => r.verificationStatus === "Rejected").length}
+                  {users.filter(u => u.verificationStatus === "Rejected").length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Rejected
+                  Rejected Users
                 </Typography>
               </CardContent>
             </Card>
@@ -456,10 +435,10 @@ function Responders() {
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
-                  placeholder="Search responders..."
+                  placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
@@ -471,7 +450,22 @@ function Responders() {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={3}>
+                <FormControl fullWidth>
+                  <InputLabel>Filter by Role</InputLabel>
+                  <Select
+                    value={filterRole}
+                    onChange={(e) => setFilterRole(e.target.value)}
+                    label="Filter by Role"
+                  >
+                    <MenuItem value="all">All Roles</MenuItem>
+                    <MenuItem value="Resident">Regular Users</MenuItem>
+                    <MenuItem value="Responder">Responders</MenuItem>
+                    <MenuItem value="Admin">Administrators</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
                   <InputLabel>Filter by Status</InputLabel>
                   <Select
@@ -493,132 +487,143 @@ function Responders() {
                   onClick={handleCreate}
                   fullWidth
                 >
-                  Add Responder
+                  Add User
                 </Button>
               </Grid>
             </Grid>
           </CardContent>
         </Card>
 
-        {/* Responders Table */}
-        <Card sx={{ flex: 1, overflow: "hidden" }}>
-          <TableContainer sx={{ height: "100%" }}>
+        {/* Users Table */}
+        <Card sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <TableContainer 
+            sx={{ 
+              flex: 1,
+              maxHeight: "calc(100vh - 400px)", // Adjust based on header and stats height
+              overflow: "auto",
+              "&::-webkit-scrollbar": {
+                width: "8px",
+                height: "8px",
+              },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor: "#f1f1f1",
+                borderRadius: "4px",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#c1c1c1",
+                borderRadius: "4px",
+                "&:hover": {
+                  backgroundColor: "#a8a8a8",
+                },
+              },
+            }}
+          >
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell>Responder</TableCell>
-                  <TableCell>Contact</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Verification Status</TableCell>
-                  <TableCell>Birthday</TableCell>
-                  <TableCell>Joined</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold" }}>User</TableCell>
+                  <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold" }}>Contact</TableCell>
+                  <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold" }}>Role</TableCell>
+                  <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold" }}>Responder Type</TableCell>
+                  <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold" }}>Verification Status</TableCell>
+                  <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold" }}>Birthday</TableCell>
+                  <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold" }}>Joined</TableCell>
+                  <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold" }} align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredResponders.map((responder) => (
-                  <TableRow key={responder._id} hover>
-                    <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                        <Avatar sx={{ bgcolor: "primary.main" }}>
-                          {getInitials(responder.firstName, responder.lastName)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2">
-                            {responder.firstName} {responder.lastName}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            @{responder.username}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                          <Email fontSize="small" color="action" />
-                          <Typography variant="body2">{responder.email}</Typography>
-                        </Box>
-                        {responder.contact && (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Phone fontSize="small" color="action" />
-                            <Typography variant="body2">{responder.contact}</Typography>
-                          </Box>
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      {responder.responderType ? (
-                        <Chip
-                          label={responder.responderType}
-                          color={getResponderTypeColor(responder.responderType)}
-                          size="small"
-                        />
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          N/A
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={responder.verificationStatus || "pending"}
-                        color={getVerificationStatusColor(responder.verificationStatus)}
-                        size="small"
-                        icon={
-                          isUserVerified(responder.verificationStatus) ? <CheckCircle /> :
-                          responder.verificationStatus === "rejected" ? <Cancel /> :
-                          <Warning />
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Cake fontSize="small" color="action" />
-                        <Typography variant="body2">
-                          {formatDate(responder.birthday)}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {formatDate(responder.createdAt)}
+                {filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                      <Typography variant="body1" color="text.secondary">
+                        No users found matching your criteria
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">
-                      <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                        {responder.verificationStatus === "pending" && (
-                          <>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              color="success"
-                              startIcon={<Verified />}
-                              onClick={() => handleVerification(responder._id, "verified")}
-                            >
-                              Verify
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              color="error"
-                              startIcon={<Cancel />}
-                              onClick={() => handleVerification(responder._id, "rejected")}
-                            >
-                              Reject
-                            </Button>
-                          </>
+                  </TableRow>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user._id} hover>
+                      <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <Avatar sx={{ bgcolor: "primary.main" }}>
+                            {getInitials(user.firstName, user.lastName)}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2">
+                              {user.firstName} {user.lastName}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              @{user.username}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+                            <Email fontSize="small" color="action" />
+                            <Typography variant="body2">{user.email}</Typography>
+                          </Box>
+                          {user.contact && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <Phone fontSize="small" color="action" />
+                              <Typography variant="body2">{user.contact}</Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.role}
+                          color={getRoleColor(user.role)}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {user.responderType ? (
+                          <Chip
+                            label={user.responderType}
+                            color={getResponderTypeColor(user.responderType)}
+                            size="small"
+                          />
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            N/A
+                          </Typography>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={`${getVerificationStatusIcon(user.verificationStatus)} ${user.verificationStatus || "Not Submitted"}`}
+                          color={getVerificationStatusColor(user.verificationStatus)}
+                          size="small"
+                          variant={isUserVerified(user.verificationStatus) ? "filled" : "outlined"}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Cake fontSize="small" color="action" />
+                          <Typography variant="body2">
+                            {formatDate(user.birthday)}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {formatDate(user.createdAt)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
                         <IconButton
-                          onClick={(e) => handleMenuOpen(e, responder)}
+                          onClick={(e) => handleMenuOpen(e, user)}
                           size="small"
                         >
                           <MoreVert />
                         </IconButton>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -632,7 +637,7 @@ function Responders() {
         onClose={handleMenuClose}
       >
         <MenuItemComponent onClick={() => {
-          handleEdit(selectedResponder);
+          handleEdit(selectedUser);
           handleMenuClose();
         }}>
           <ListItemIcon>
@@ -641,7 +646,7 @@ function Responders() {
           <ListItemText>Edit</ListItemText>
         </MenuItemComponent>
         <MenuItemComponent onClick={() => {
-          handleDelete(selectedResponder._id);
+          handleDelete(selectedUser._id);
           handleMenuClose();
         }}>
           <ListItemIcon>
@@ -654,7 +659,7 @@ function Responders() {
       {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingResponder ? "Edit Responder" : "Add New Responder"}
+          {editingUser ? "Edit User" : "Add New User"}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
@@ -708,8 +713,8 @@ function Responders() {
                   type="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  required={!editingResponder}
-                  helperText={editingResponder ? "Leave empty to keep current password" : "Required for new responders"}
+                  required={!editingUser}
+                  helperText={editingUser ? "Leave empty to keep current password" : "Required for new users"}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -734,53 +739,43 @@ function Responders() {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
-                  <InputLabel>Responder Type</InputLabel>
+                  <InputLabel>Role</InputLabel>
                   <Select
-                    name="responderType"
-                    value={formData.responderType}
+                    name="role"
+                    value={formData.role}
                     onChange={handleInputChange}
-                    label="Responder Type"
+                    label="Role"
                   >
-                    <MenuItem value="police">Police</MenuItem>
-                    <MenuItem value="fire">Fire Department</MenuItem>
-                    <MenuItem value="hospital">Hospital</MenuItem>
-                    <MenuItem value="barangay">Barangay</MenuItem>
+                    <MenuItem value="Resident">Resident</MenuItem>
+                    <MenuItem value="Responder">Responder</MenuItem>
+                    <MenuItem value="Admin">Admin</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Verification Status</InputLabel>
-                  <Select
-                    name="verificationStatus"
-                    value={formData.verificationStatus}
-                    onChange={handleInputChange}
-                    label="Verification Status"
-                  >
-                    <MenuItem value="pending">Pending</MenuItem>
-                    <MenuItem value="verified">Verified</MenuItem>
-                    <MenuItem value="rejected">Rejected</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Verification Notes"
-                  name="verificationNotes"
-                  value={formData.verificationNotes}
-                  onChange={handleInputChange}
-                  multiline
-                  rows={3}
-                  placeholder="Add notes about verification status..."
-                />
-              </Grid>
+              {formData.role === "Responder" && (
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Responder Type</InputLabel>
+                    <Select
+                      name="responderType"
+                      value={formData.responderType}
+                      onChange={handleInputChange}
+                      label="Responder Type"
+                    >
+                      <MenuItem value="police">Police</MenuItem>
+                      <MenuItem value="fire">Fire Department</MenuItem>
+                      <MenuItem value="hospital">Hospital</MenuItem>
+                      <MenuItem value="barangay">Barangay</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              )}
             </Grid>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
             <Button type="submit" variant="contained">
-              {editingResponder ? "Update" : "Create"}
+              {editingUser ? "Update" : "Create"}
             </Button>
           </DialogActions>
         </form>
@@ -804,4 +799,4 @@ function Responders() {
   );
 }
 
-export default Responders;
+export default Users;

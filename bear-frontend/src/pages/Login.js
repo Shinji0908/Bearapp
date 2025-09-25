@@ -14,7 +14,7 @@ import {
 import {
   Visibility,
   VisibilityOff,
-  // Email,
+  Person,
   Lock,
   Login as LoginIcon,
 } from "@mui/icons-material";
@@ -90,7 +90,7 @@ function Login() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        backgroundColor: "var(--bear-body)",
         padding: 2,
       }}
     >
@@ -100,31 +100,74 @@ function Login() {
           sx={{
             padding: 4,
             borderRadius: 3,
-            background: "rgba(255, 255, 255, 0.95)",
+            background: "var(--bear-white)",
             backdropFilter: "blur(10px)",
+            border: "2px solid var(--bear-yellow)",
           }}
         >
           {/* Header */}
           <Box sx={{ textAlign: "center", mb: 4 }}>
+            {/* Logo */}
+            <Box
+              sx={{
+                width: 120,
+                height: 120,
+                mx: "auto",
+                mb: 3,
+                borderRadius: 3,
+                backgroundColor: "var(--bear-semiwhite)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+                boxShadow: 2,
+                border: "3px solid var(--bear-blue)",
+              }}
+            >
+              <img
+                src="/bear.jpg"
+                alt="B.E.A.R Logo"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: "12px",
+                }}
+                onError={(e) => {
+                  // Fallback to emoji if image fails to load
+                  e.target.style.display = "none";
+                  e.target.nextSibling.style.display = "flex";
+                }}
+              />
+              <Box
+                sx={{
+                  display: "none",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "3rem",
+                  width: "100%",
+                  height: "100%",
+                }}
+              >
+                🐻
+              </Box>
+            </Box>
+            
             <Typography
               variant="h4"
               component="h1"
               sx={{
                 fontWeight: "bold",
-                color: "#333",
+                color: "var(--bear-blue)",
                 mb: 1,
-                background: "linear-gradient(45deg, #667eea, #764ba2)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
               }}
             >
-              🚨 BEAR System
+            B.E.A.R
             </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ mb: 2, color: "var(--bear-blue)" }}>
               Barangay Emergency Alert Response
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: "var(--bear-black)" }}>
               Sign in to access the emergency management dashboard
             </Typography>
           </Box>
@@ -152,6 +195,13 @@ function Login() {
               required
               margin="normal"
               variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Person color="action" />
+                  </InputAdornment>
+                ),
+              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
@@ -199,15 +249,11 @@ function Login() {
               fullWidth
               variant="contained"
               disabled={loading}
+              className="bear-primary-button"
               sx={{
                 mt: 3,
                 mb: 2,
                 py: 1.5,
-                borderRadius: 2,
-                background: "linear-gradient(45deg, #667eea, #764ba2)",
-                "&:hover": {
-                  background: "linear-gradient(45deg, #5a6fd8, #6a4190)",
-                },
                 fontSize: "1.1rem",
                 fontWeight: "bold",
               }}
@@ -215,64 +261,11 @@ function Login() {
             >
               {loading ? "Signing In..." : "Sign In"}
             </Button>
-
-            {/* Demo Credentials */}
-            <Box
-              sx={{
-                mt: 3,
-                p: 2,
-                backgroundColor: "#f5f5f5",
-                borderRadius: 2,
-                border: "1px solid #e0e0e0",
-              }}
-            >
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                Demo Credentials:
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Username: admin
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Password: admin123
-              </Typography>
-              
-              <Button
-                variant="outlined"
-                fullWidth
-                sx={{ mt: 2 }}
-                onClick={async () => {
-                  try {
-                    const response = await fetch("http://localhost:5000/api/admin/register", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        username: "admin",
-                        email: "admin@bear-system.com",
-                        password: "admin123"
-                      })
-                    });
-                    
-                    if (response.ok) {
-                      setSuccess("Test admin account created successfully!");
-                    } else {
-                      const data = await response.json();
-                      setError(data.message || "Failed to create admin account");
-                    }
-                  } catch (err) {
-                    setError("Network error creating admin account");
-                  }
-                }}
-              >
-                Create Test Admin Account
-              </Button>
-            </Box>
-            </Box>
+          </Box>
         </Paper>
-
-        {/* Footer */}
         <Box sx={{ textAlign: "center", mt: 3 }}>
-          <Typography variant="body2" color="rgba(255, 255, 255, 0.8)">
-            © 2025 BEAR System - Emergency Response Management
+          <Typography variant="body2" sx={{ color: "var(--bear-blue)", opacity: 0.8 }}>
+            © 2025 B.E.A.R. Barangay Emergency Alert Response System
           </Typography>
         </Box>
       </Container>
