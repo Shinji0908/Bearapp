@@ -18,6 +18,7 @@ import {
   Lock,
   Login as LoginIcon,
 } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -28,6 +29,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -57,14 +59,15 @@ function Login() {
 
       if (response.ok) {
         setSuccess("Login successful! Redirecting...");
+        
         // Store token in localStorage
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
         
-        // Redirect to dashboard after successful login
+        // Small delay to ensure localStorage is set before redirect
         setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 1500);
+          navigate("/dashboard");
+        }, 100);
       } else {
         // Show more detailed error information
         const errorMsg = data.message || "Login failed. Please try again.";

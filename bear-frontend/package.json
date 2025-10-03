@@ -23,7 +23,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && node obfuscate-build.js",
+    "build:secure": "GENERATE_SOURCEMAP=false react-scripts build && node obfuscate-build.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

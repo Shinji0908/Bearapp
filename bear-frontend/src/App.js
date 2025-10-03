@@ -10,14 +10,19 @@ import Incidents from "./pages/Incidents";
 import Users from "./pages/Users";
 import Responders from "./pages/Responders";
 import Reports from "./pages/Reports";
-import ActivityLogs from "./pages/ActivityLogs";
 import VerifyAccounts from "./pages/VerifyAccounts";
 import NotificationSystem from "./components/NotificationSystem";
+import SecurityProtection from "./components/SecurityProtection";
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/login" replace />;
+  const user = localStorage.getItem("user");
+  
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
 }
 
 function App() {
@@ -27,16 +32,15 @@ function App() {
     // Only connect to socket if user is logged in
     const token = localStorage.getItem("token");
     if (token) {
-      const newSocket = io(process.env.REACT_APP_SOCKET_URL || "http://localhost:5000", { 
-        transports: ["websocket"] 
-      });
+      const newSocket = io(process.env.REACT_APP_SOCKET_URL || "http://localhost:5000");
       
       newSocket.on("connect", () => {
-        console.log("✅ Global Socket connected:", newSocket.id);
+        console.log("✅ Socket connected:", newSocket.id);
+        newSocket.emit("authenticate", { token });
       });
       
-      newSocket.on("disconnect", (reason) => {
-        console.log("🔌 Global Socket disconnected:", reason);
+      newSocket.on("disconnect", () => {
+        console.log("🔌 Socket disconnected");
       });
       
       setSocket(newSocket);
@@ -50,6 +54,7 @@ function App() {
   return (
     <ThemeProvider theme={bearTheme}>
       <CssBaseline />
+      <SecurityProtection />
       <Router>
         {/* Global Notification System */}
         {socket && <NotificationSystem socket={socket} />}
@@ -104,14 +109,6 @@ function App() {
           element={
             <ProtectedRoute>
               <Reports />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/activity" 
-          element={
-            <ProtectedRoute>
-              <ActivityLogs />
             </ProtectedRoute>
           } 
         />

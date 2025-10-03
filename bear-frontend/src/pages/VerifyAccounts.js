@@ -236,7 +236,7 @@ function VerifyAccounts() {
   return (
     <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <AppBar position="static" sx={{ backgroundColor: "#2c3e50" }}>
+      <AppBar position="static" sx={{ backgroundColor: "var(--bear-dark-red)", borderRadius: 0 }}>
         <Toolbar>
           <IconButton
             edge="start"
@@ -256,7 +256,7 @@ function VerifyAccounts() {
       </AppBar>
 
       {/* Main Content */}
-      <Box sx={{ p: 3, flex: 1, overflow: "auto" }}>
+      <Box sx={{ p: 3, flex: 1, overflow: "auto", backgroundColor: "var(--bear-body)" }}>
 
       {message.text && (
         <Alert 
@@ -270,9 +270,18 @@ function VerifyAccounts() {
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
+          <Paper 
+            className="bear-card"
+            sx={{ 
+              p: 3, 
+              borderRadius: 2, 
+              boxShadow: 2,
+              backgroundColor: "var(--bear-white)",
+              border: "1px solid var(--bear-yellow)"
+            }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: "var(--bear-blue)" }}>
                 Pending Verifications
               </Typography>
               <Chip 
@@ -294,12 +303,12 @@ function VerifyAccounts() {
                 {pendingUsers.map((user, index) => (
                   <React.Fragment key={user._id}>
                     <ListItem sx={{ 
-                      border: '1px solid #e0e0e0', 
+                      border: '1px solid var(--bear-yellow)', 
                       borderRadius: 2, 
                       mb: 2,
-                      backgroundColor: '#fafafa',
+                      backgroundColor: "var(--bear-semiwhite)",
                       '&:hover': {
-                        backgroundColor: '#f0f0f0',
+                        backgroundColor: "var(--bear-white)",
                         transform: 'translateY(-2px)',
                         boxShadow: 2
                       },
@@ -358,9 +367,15 @@ function VerifyAccounts() {
                           variant="contained"
                           startIcon={<Visibility />}
                           onClick={() => handleViewUser(user)}
-                          color="primary"
                           size="small"
-                          sx={{ borderRadius: 2 }}
+                          sx={{ 
+                            borderRadius: 2,
+                            backgroundColor: "var(--bear-blue)",
+                            '&:hover': {
+                              backgroundColor: "var(--bear-blue)",
+                              opacity: 0.8
+                            }
+                          }}
                         >
                           Review
                         </Button>
@@ -569,22 +584,34 @@ function VerifyAccounts() {
           </Button>
           <Button
             variant="contained"
-            color="success"
             startIcon={<CheckCircle />}
             onClick={() => {
               setViewDialogOpen(false);
               handleVerifyUser('Verified');
+            }}
+            sx={{
+              backgroundColor: "var(--bear-status-approved)",
+              '&:hover': {
+                backgroundColor: "var(--bear-status-approved)",
+                opacity: 0.8
+              }
             }}
           >
             Approve
           </Button>
           <Button
             variant="contained"
-            color="error"
             startIcon={<Cancel />}
             onClick={() => {
               setViewDialogOpen(false);
               handleVerifyUser('Rejected');
+            }}
+            sx={{
+              backgroundColor: "var(--bear-red)",
+              '&:hover': {
+                backgroundColor: "var(--bear-red)",
+                opacity: 0.8
+              }
             }}
           >
             Reject
@@ -630,19 +657,31 @@ function VerifyAccounts() {
           </Button>
           <Button
             variant="contained"
-            color="error"
             startIcon={<Cancel />}
             onClick={handleRejectUser}
             disabled={actionLoading}
+            sx={{
+              backgroundColor: "var(--bear-red)",
+              '&:hover': {
+                backgroundColor: "var(--bear-red)",
+                opacity: 0.8
+              }
+            }}
           >
             {actionLoading ? <CircularProgress size={20} /> : 'Reject'}
           </Button>
           <Button
             variant="contained"
-            color="success"
             startIcon={<CheckCircle />}
             onClick={handleConfirmVerification}
             disabled={actionLoading}
+            sx={{
+              backgroundColor: "var(--bear-status-approved)",
+              '&:hover': {
+                backgroundColor: "var(--bear-status-approved)",
+                opacity: 0.8
+              }
+            }}
           >
             {actionLoading ? <CircularProgress size={20} /> : 'Approve'}
           </Button>

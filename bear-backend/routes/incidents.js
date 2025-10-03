@@ -45,10 +45,12 @@ router.post("/", async (req, res) => {
 
     await incident.save();
 
-    // 🔔 Emit real-time event with populated user data
+    // 📝 Log the incident creation activity
+
+    // 🔔 Emit real-time event
     const io = req.app.get("io");
     if (io) {
-      // Populate the incident with reporter details for real-time updates
+      // Populate the incident with reporter details
       const populatedIncident = await Incident.findById(incident._id)
         .populate({
           path: "reportedBy",
@@ -57,7 +59,10 @@ router.post("/", async (req, res) => {
         })
         .lean();
         
+      // ✅ Broadcast to all clients
       io.emit("incidentCreated", { incident: populatedIncident });
+      
+      console.log(`📢 New incident created by user ${decoded.id} - notified all users`);
     }
 
     res.status(201).json({ message: "Incident reported successfully", incident });
@@ -134,10 +139,15 @@ router.put("/:id/status", async (req, res) => {
       return res.status(404).json({ message: "Incident not found" });
     }
 
-    // 🔔 Emit real-time event to all connected clients
+    // 📝 Log the incident status update activity
+
+    // 🔔 Emit real-time event
     const io = req.app.get("io");
     if (io) {
+      // ✅ Broadcast to all clients
       io.emit("incidentStatusUpdated", { incident });
+      
+      console.log(`📢 Incident status updated by user ${decoded.id} - notified all users`);
     }
 
     res.json({ 
@@ -178,10 +188,15 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "Incident not found" });
     }
 
-    // 🔔 Emit real-time event to all connected clients
+    // 📝 Log the incident deletion activity
+
+    // 🔔 Emit real-time event
     const io = req.app.get("io");
     if (io) {
+      // ✅ Broadcast to all clients
       io.emit("incidentDeleted", { incidentId: id, incident });
+      
+      console.log(`📢 Incident deleted by user ${decoded.id} - notified all users`);
     }
 
     res.json({ message: "Incident deleted successfully", incident });

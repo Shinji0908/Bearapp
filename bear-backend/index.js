@@ -5,6 +5,8 @@ const path = require('path');
 require('dotenv').config();
 const http = require('http');
 const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
 const app = express();
 
@@ -27,6 +29,7 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/verification", require("./routes/verification"));
+app.use("/api/dashboard", require("./routes/dashboard"));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -48,17 +51,38 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"],
-    credentials: true
+    methods: ["GET", "POST"]
   }
 });
+
+// ✅ Store user-to-socket mapping for filtering self-notifications
+const userSocketMap = new Map(); // userId -> socketId
+const socketUserMap = new Map(); // socketId -> userId
 
 // Expose io to routes
 app.set('io', io);
 
-// Socket.IO events
+// ✅ Enhanced Socket.IO connection with authentication
 io.on('connection', (socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);
+
+  // ✅ Authenticate socket connection
+  socket.on('authenticate', ({ token }) => {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      const userId = decoded.id;
+      
+      // Store mappings
+      userSocketMap.set(userId, socket.id);
+      socketUserMap.set(socket.id, userId);
+      
+      console.log(`✅ Socket ${socket.id} authenticated for user ${userId}`);
+      socket.emit('authenticated', { userId });
+    } catch (error) {
+      console.log(`❌ Socket authentication failed: ${error.message}`);
+      socket.emit('authentication_failed', { message: 'Invalid token' });
+    }
+  });
 
   socket.on('joinIncident', ({ incidentId }) => {
     if (!incidentId) return;
@@ -76,9 +100,36 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', (reason) => {
-    console.log(`🔌 Client disconnected: ${socket.id} (${reason})`);
+    const userId = socketUserMap.get(socket.id);
+    if (userId) {
+      userSocketMap.delete(userId);
+      socketUserMap.delete(socket.id);
+      console.log(`🔌 User ${userId} disconnected: ${socket.id} (${reason})`);
+    } else {
+      console.log(`🔌 Client disconnected: ${socket.id} (${reason})`);
+    }
   });
 });
+
+// ✅ Helper function to broadcast to all except sender
+const broadcastToOthers = async (io, senderUserId, event, data) => {
+  const senderSocketId = userSocketMap.get(senderUserId);
+  
+  // Get all connected sockets
+  const allSockets = await io.fetchSockets();
+  
+  // Broadcast to all except sender
+  allSockets.forEach(socket => {
+    if (socket.id !== senderSocketId) {
+      socket.emit(event, data);
+    }
+  });
+  
+  console.log(`📢 Broadcasted ${event} to ${allSockets.length - 1} clients (excluding sender ${senderUserId})`);
+};
+
+// Expose helper function to routes
+app.set('broadcastToOthers', broadcastToOthers);
 
 // ✅ Listen on all interfaces (PC + Emulator + LAN)
 server.listen(PORT, "0.0.0.0", () => {

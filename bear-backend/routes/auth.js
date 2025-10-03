@@ -2,7 +2,6 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
@@ -210,6 +209,8 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
     console.log("✅ JWT token generated");
+
+    // 📝 Log the user login activity
 
     // ✅ Determine verification status for response
     // If user hasn't submitted any documents yet, return null

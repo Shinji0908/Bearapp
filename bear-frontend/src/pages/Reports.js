@@ -25,14 +25,12 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
-  Divider,
 } from "@mui/material";
 import {
   ArrowBack,
   Search,
   Download,
   Refresh,
-  Assessment,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
@@ -42,7 +40,7 @@ function Reports() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
-  const [filterPeriod, setFilterPeriod] = useState("month");
+  const [filterPeriod, setFilterPeriod] = useState("all");
   const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM format
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const navigate = useNavigate();
@@ -89,7 +87,7 @@ function Reports() {
           ? `${incident.location.latitude || ''}, ${incident.location.longitude || ''}`
           : incident.location || '';
         
-        return incident.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        return incident.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                incident.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                locationString.toLowerCase().includes(searchTerm.toLowerCase()) ||
                incident.type?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -117,6 +115,7 @@ function Reports() {
         return incidentDate.getFullYear() === parseInt(selectedYear);
       });
     }
+    // If filterPeriod is "all", no date filtering is applied
 
     setFilteredIncidents(filtered);
   }, [incidents, searchTerm, filterType, filterPeriod, filterDate]);
@@ -141,9 +140,9 @@ function Reports() {
   const getTypeColor = (type) => {
     switch (type) {
       case "fire": return "error";
-      case "medical": return "success";
+      case "hospital": return "success";
       case "police": return "info";
-      case "other": return "default";
+      case "barangay": return "warning";
       default: return "default";
     }
   };
@@ -180,9 +179,10 @@ function Reports() {
       resolvedIncidents,
       closedIncidents,
       typeBreakdown,
-      period: filterPeriod === "month" ? 
-        new Date(filterDate + "-01").toLocaleDateString("en-US", { month: "long", year: "numeric" }) :
-        filterDate.split("-")[0]
+      period: filterPeriod === "all" ? "All Time" :
+        filterPeriod === "month" ? 
+          new Date(filterDate + "-01").toLocaleDateString("en-US", { month: "long", year: "numeric" }) :
+          filterDate.split("-")[0]
     };
   };
 
@@ -207,7 +207,7 @@ function Reports() {
     // Add incident details
     filteredIncidents.forEach(incident => {
       csvContent.push([
-        incident.title || "",
+        incident.name || "",
         incident.type || "",
         incident.status || "",
         incident.location || "",
@@ -242,8 +242,6 @@ function Reports() {
     );
   }
 
-  const reportData = generateReportData();
-
   return (
     <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Header */}
@@ -268,69 +266,6 @@ function Reports() {
 
       {/* Main Content */}
       <Box sx={{ p: 3, flex: 1, overflow: "hidden" }}>
-        {/* Report Summary */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card>
-              <CardContent sx={{ textAlign: "center" }}>
-                <Typography variant="h4" color="primary">
-                  {reportData.totalIncidents}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Total Incidents
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card>
-              <CardContent sx={{ textAlign: "center" }}>
-                <Typography variant="h4" color="error.main">
-                  {reportData.openIncidents}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Open
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card>
-              <CardContent sx={{ textAlign: "center" }}>
-                <Typography variant="h4" color="warning.main">
-                  {reportData.inProgressIncidents}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  In Progress
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card>
-              <CardContent sx={{ textAlign: "center" }}>
-                <Typography variant="h4" color="success.main">
-                  {reportData.resolvedIncidents}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Resolved
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card>
-              <CardContent sx={{ textAlign: "center" }}>
-                <Typography variant="h4" color="text.secondary">
-                  {reportData.closedIncidents}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Closed
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
 
         {/* Filters and Controls */}
         <Card sx={{ mb: 3 }}>
@@ -360,10 +295,10 @@ function Reports() {
                     label="Type"
                   >
                     <MenuItem value="all">All Types</MenuItem>
+                    <MenuItem value="barangay">Barangay</MenuItem>
                     <MenuItem value="fire">Fire</MenuItem>
-                    <MenuItem value="medical">Medical</MenuItem>
+                    <MenuItem value="hospital">Hospital</MenuItem>
                     <MenuItem value="police">Police</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -375,21 +310,24 @@ function Reports() {
                     onChange={(e) => setFilterPeriod(e.target.value)}
                     label="Period"
                   >
+                    <MenuItem value="all">All Time</MenuItem>
                     <MenuItem value="month">Month</MenuItem>
                     <MenuItem value="year">Year</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={2}>
-                <TextField
-                  fullWidth
-                  type={filterPeriod === "month" ? "month" : "number"}
-                  label={filterPeriod === "month" ? "Select Month" : "Select Year"}
-                  value={filterDate}
-                  onChange={(e) => setFilterDate(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
+              {filterPeriod !== "all" && (
+                <Grid item xs={12} md={2}>
+                  <TextField
+                    fullWidth
+                    type={filterPeriod === "month" ? "month" : "number"}
+                    label={filterPeriod === "month" ? "Select Month" : "Select Year"}
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+              )}
               <Grid item xs={12} md={3}>
                 <Button
                   variant="contained"
@@ -408,13 +346,6 @@ function Reports() {
         {/* Incidents Table */}
         <Card sx={{ flex: 1, overflow: "hidden" }}>
           <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Assessment sx={{ mr: 1 }} />
-              <Typography variant="h6">
-                Incident Details ({filteredIncidents.length} incidents)
-              </Typography>
-            </Box>
-            <Divider sx={{ mb: 2 }} />
             <TableContainer sx={{ maxHeight: 400 }}>
               <Table stickyHeader>
                 <TableHead>
@@ -432,7 +363,7 @@ function Reports() {
                     <TableRow key={incident._id} hover>
                       <TableCell>
                         <Typography variant="subtitle2">
-                          {incident.title || "Untitled"}
+                          {incident.name || "Untitled"}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                           {incident.description?.substring(0, 50)}

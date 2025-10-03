@@ -13,8 +13,11 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 const normalizeVerificationStatus = (status) => {
   if (!status) return null;
   const normalized = status.toLowerCase();
-  if (normalized === "approved" || normalized === "verified") {
-    return "Verified"; // Standardize to "Verified"
+  if (normalized === "approved") {
+    return "Approved"; // Keep "Approved" status
+  }
+  if (normalized === "verified") {
+    return "Verified"; // Keep "Verified" status
   }
   return status; // Keep original case for other statuses
 };

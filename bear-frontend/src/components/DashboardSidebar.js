@@ -14,7 +14,6 @@ import {
   Emergency,
   People,
   Assessment,
-  History,
   VerifiedUser,
   ExitToApp,
 } from "@mui/icons-material";
@@ -56,12 +55,6 @@ function DashboardSidebar({ user, onLogout }) {
       icon: <Assessment />,
       path: "/reports",
       color: "var(--bear-yellow)",
-    },
-    {
-      text: "Activity Logs",
-      icon: <History />,
-      path: "/activity",
-      color: "var(--bear-semiwhite)",
     },
   ];
 

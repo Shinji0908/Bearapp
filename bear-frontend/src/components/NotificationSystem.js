@@ -47,27 +47,156 @@ function NotificationSystem({ socket }) {
     }
   };
 
-  const playNotificationSound = () => {
-    // Create a simple notification sound
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+  // ✅ Audio elements for custom notification sounds
+  const [audioElement, setAudioElement] = useState(null);
+  const [resolvedAudioElement, setResolvedAudioElement] = useState(null);
+
+  // ✅ Initialize audio elements on component mount
+  useEffect(() => {
+    console.log('🎵 Initializing audio elements...');
     
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    // Initialize emergency alert sound
+    const audio = new Audio('/sounds/bear-alert.mp3');
+    audio.preload = 'auto';
+    audio.volume = 0.8; // Set volume (0.0 to 1.0)
     
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-    oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+    // Initialize resolved chime sound
+    const resolvedAudio = new Audio('/sounds/resolved_chime.mp3');
+    resolvedAudio.preload = 'auto';
+    resolvedAudio.volume = 0.7; // Slightly lower volume for chime
     
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    // ✅ Add comprehensive error handling for emergency audio loading
+    audio.addEventListener('error', (e) => {
+      console.error('❌ Emergency audio loading error:', e);
+      console.error('❌ Error details:', {
+        code: e.target.error?.code,
+        message: e.target.error?.message,
+        networkState: e.target.networkState,
+        readyState: e.target.readyState
+      });
+    });
     
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
-  };
+    audio.addEventListener('canplaythrough', () => {
+      console.log('✅ Emergency alert sound loaded successfully');
+    });
+    
+    // ✅ Add error handling for resolved audio loading
+    resolvedAudio.addEventListener('error', (e) => {
+      console.error('❌ Resolved chime loading error:', e);
+    });
+    
+    resolvedAudio.addEventListener('canplaythrough', () => {
+      console.log('✅ Resolved chime sound loaded successfully');
+    });
+    
+    // Test if files exist
+    fetch('/sounds/bear-alert.mp3', { method: 'HEAD' })
+      .then(response => {
+        if (response.ok) {
+          console.log('✅ Emergency sound file exists and is accessible');
+        } else {
+          console.error('❌ Emergency sound file not found:', response.status);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error checking emergency sound file:', error);
+      });
+      
+    fetch('/sounds/resolved_chime.mp3', { method: 'HEAD' })
+      .then(response => {
+        if (response.ok) {
+          console.log('✅ Resolved chime file exists and is accessible');
+        } else {
+          console.error('❌ Resolved chime file not found:', response.status);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error checking resolved chime file:', error);
+      });
+    
+    setAudioElement(audio);
+    setResolvedAudioElement(resolvedAudio);
+
+    // Cleanup audio elements on unmount
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+      if (resolvedAudio) {
+        resolvedAudio.pause();
+        resolvedAudio.currentTime = 0;
+      }
+    };
+  }, []);
+
+  // ✅ Enhanced sound playing with custom audio file ONLY
+  const playNotificationSound = useCallback(() => {
+    console.log('🔊 Attempting to play emergency notification sound...');
+    
+    try {
+      if (audioElement) {
+        console.log('🎵 Using custom bear-alert.mp3 sound');
+        // Reset audio to beginning
+        audioElement.currentTime = 0;
+        
+        // Play the custom sound
+        const playPromise = audioElement.play();
+        
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('✅ Emergency sound played successfully');
+            })
+            .catch(error => {
+              console.log('❌ Emergency audio play failed:', error);
+              console.log('🔧 Trying to play again after user interaction...');
+            });
+        }
+      } else {
+        console.log('⚠️ Emergency audio not loaded');
+      }
+    } catch (error) {
+      console.log('❌ Emergency sound playback error:', error);
+    }
+  }, [audioElement]);
+
+  // ✅ NEW: Play resolved chime sound
+  const playResolvedSound = useCallback(() => {
+    console.log('🔔 Attempting to play resolved chime sound...');
+    
+    try {
+      if (resolvedAudioElement) {
+        console.log('🎵 Using custom resolved_chime.mp3 sound');
+        // Reset audio to beginning
+        resolvedAudioElement.currentTime = 0;
+        
+        // Play the resolved chime
+        const playPromise = resolvedAudioElement.play();
+        
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('✅ Resolved chime played successfully');
+            })
+            .catch(error => {
+              console.log('❌ Resolved chime play failed:', error);
+              console.log('🔧 Trying to play again after user interaction...');
+            });
+        }
+      } else {
+        console.log('⚠️ Resolved chime audio not loaded');
+      }
+    } catch (error) {
+      console.log('❌ Resolved chime playback error:', error);
+    }
+  }, [resolvedAudioElement]);
+
+  // ✅ Removed fallback sound - only use custom bear-alert.mp3
 
   const showNotification = useCallback((incident) => {
+    console.log('🔔 Showing notification for incident:', incident);
+    
     const notification = {
       id: Date.now(),
       incident,
@@ -77,14 +206,29 @@ function NotificationSystem({ socket }) {
     setNotifications(prev => [notification, ...prev.slice(0, 4)]); // Keep last 5
     setCurrentNotification(notification);
     
-    // Play sound
+    // ✅ Play custom bear-alert sound
     playNotificationSound();
     
     // Auto-hide after 8 seconds
     setTimeout(() => {
       setCurrentNotification(null);
     }, 8000);
-  }, []);
+  }, [playNotificationSound]);
+
+  // ✅ Test function to debug notification system
+  const testNotification = useCallback(() => {
+    console.log('🧪 Testing notification system...');
+    const testIncident = {
+      _id: 'test-' + Date.now(),
+      name: 'Test Emergency',
+      description: 'This is a test notification to check if the alarm system works',
+      type: 'fire',
+      status: 'Pending',
+      location: { latitude: 14.5995, longitude: 120.9842 },
+      reportedBy: { firstName: 'Test', lastName: 'User' }
+    };
+    showNotification(testIncident);
+  }, [showNotification]);
 
   const showStatusUpdateNotification = useCallback((incident) => {
     const notification = {
@@ -97,14 +241,20 @@ function NotificationSystem({ socket }) {
     setNotifications(prev => [notification, ...prev.slice(0, 4)]); // Keep last 5
     setCurrentNotification(notification);
     
-    // Play sound for status updates too
-    playNotificationSound();
+    // ✅ Play different sound based on status
+    if (incident.status === 'Resolved') {
+      console.log('🎉 Incident resolved - playing resolved chime');
+      playResolvedSound();
+    } else {
+      console.log('📊 Status update - playing emergency sound');
+      playNotificationSound();
+    }
     
     // Auto-hide after 6 seconds (shorter for status updates)
     setTimeout(() => {
       setCurrentNotification(null);
     }, 6000);
-  }, []);
+  }, [playNotificationSound, playResolvedSound]);
 
   useEffect(() => {
     if (!socket) return;
@@ -119,11 +269,25 @@ function NotificationSystem({ socket }) {
       showStatusUpdateNotification(incident);
     });
 
+    // ✅ NEW: Listen for deleted incidents - hide any notifications for this incident
+    socket.on('incidentDeleted', ({ incidentId, incident }) => {
+      console.log(`🗑️ Incident ${incidentId} was deleted - hiding any notifications`);
+      
+      // Hide current notification if it's for the deleted incident
+      if (currentNotification && currentNotification.incident._id === incidentId) {
+        setCurrentNotification(null);
+      }
+      
+      // Remove from notifications history
+      setNotifications(prev => prev.filter(notif => notif.incident._id !== incidentId));
+    });
+
     return () => {
       socket.off('incidentCreated');
       socket.off('incidentStatusUpdated');
+      socket.off('incidentDeleted'); // ✅ NEW: Clean up deleted incident listener
     };
-  }, [socket, showNotification, showStatusUpdateNotification]);
+  }, [socket, showNotification, showStatusUpdateNotification, currentNotification]);
 
   const handleClose = () => {
     setCurrentNotification(null);
@@ -134,6 +298,46 @@ function NotificationSystem({ socket }) {
     console.log('Notification clicked:', currentNotification?.incident);
     setCurrentNotification(null);
   };
+
+  // ✅ Test function for resolved chime
+  const testResolvedSound = useCallback(() => {
+    console.log('🧪 Testing resolved chime sound...');
+    playResolvedSound();
+  }, [playResolvedSound]);
+
+  // ✅ Test function for resolved notification
+  const testResolvedNotification = useCallback(() => {
+    console.log('🧪 Testing resolved notification...');
+    const testIncident = {
+      _id: 'test-resolved-' + Date.now(),
+      name: 'Test Resolved Incident',
+      description: 'This is a test resolved incident to check the chime sound',
+      type: 'fire',
+      status: 'Resolved', // This will trigger the resolved chime
+      location: { latitude: 14.5995, longitude: 120.9842 },
+      reportedBy: { firstName: 'Test', lastName: 'User' }
+    };
+    showStatusUpdateNotification(testIncident);
+  }, [showStatusUpdateNotification]);
+
+  // ✅ Expose test functions to window for debugging (only in development)
+  useEffect(() => {
+    // Only expose in development mode
+    if (process.env.NODE_ENV === 'development') {
+      window.testNotification = testNotification;
+      window.testSound = () => {
+        console.log('🔊 Testing emergency sound...');
+        playNotificationSound();
+      };
+      window.testResolvedSound = testResolvedSound;
+      window.testResolvedNotification = testResolvedNotification;
+      console.log('🧪 Test functions available:');
+      console.log('  - window.testNotification() - Test full emergency notification');
+      console.log('  - window.testSound() - Test emergency sound only');
+      console.log('  - window.testResolvedSound() - Test resolved chime only');
+      console.log('  - window.testResolvedNotification() - Test full resolved notification');
+    }
+  }, [testNotification, playNotificationSound, testResolvedSound, testResolvedNotification]);
 
   if (!currentNotification) return null;
 

@@ -106,10 +106,12 @@ router.get("/test", async (req, res) => {
     // ✅ Apply verification status logic to users
     const usersWithCorrectedStatus = users.map(user => {
       const userObj = user.toObject();
-      // Normalize verification status and handle document logic
+      // Normalize verification status first
       userObj.verificationStatus = normalizeVerificationStatus(userObj.verificationStatus);
-      // If user hasn't submitted any documents yet, set verificationStatus to null
-      if (!userObj.verificationDocuments || userObj.verificationDocuments.length === 0) {
+      
+      // Only set to null if user has never submitted documents AND has no verification status
+      if ((!userObj.verificationDocuments || userObj.verificationDocuments.length === 0) && 
+          (!userObj.verificationStatus || userObj.verificationStatus === "Pending")) {
         userObj.verificationStatus = null;
       }
       return userObj;
@@ -195,12 +197,21 @@ router.get("/", async (req, res) => {
     // ✅ Apply verification status logic to all users
     const usersWithCorrectedStatus = users.map(user => {
       const userObj = user.toObject();
-      // Normalize verification status and handle document logic
+      console.log(`🔍 Processing user: ${userObj.firstName} ${userObj.lastName}`);
+      console.log(`🔍 Original verificationStatus: ${userObj.verificationStatus}`);
+      console.log(`🔍 Documents count: ${userObj.verificationDocuments ? userObj.verificationDocuments.length : 0}`);
+      
+      // Normalize verification status first
       userObj.verificationStatus = normalizeVerificationStatus(userObj.verificationStatus);
-      // If user hasn't submitted any documents yet, set verificationStatus to null
-      if (!userObj.verificationDocuments || userObj.verificationDocuments.length === 0) {
+      console.log(`🔍 After normalization: ${userObj.verificationStatus}`);
+      
+      // Only set to null if user has never submitted documents AND has no verification status
+      if ((!userObj.verificationDocuments || userObj.verificationDocuments.length === 0) && 
+          (!userObj.verificationStatus || userObj.verificationStatus === "Pending")) {
+        console.log(`🔍 Setting to null - no documents and no status`);
         userObj.verificationStatus = null;
       }
+      console.log(`🔍 Final verificationStatus: ${userObj.verificationStatus}`);
       return userObj;
     });
     
@@ -230,10 +241,12 @@ router.get("/:id", authenticateToken, async (req, res) => {
 
     // ✅ Apply verification status logic
     const userObj = user.toObject();
-    // Normalize verification status and handle document logic
+    // Normalize verification status first
     userObj.verificationStatus = normalizeVerificationStatus(userObj.verificationStatus);
-    // If user hasn't submitted any documents yet, set verificationStatus to null
-    if (!userObj.verificationDocuments || userObj.verificationDocuments.length === 0) {
+    
+    // Only set to null if user has never submitted documents AND has no verification status
+    if ((!userObj.verificationDocuments || userObj.verificationDocuments.length === 0) && 
+        (!userObj.verificationStatus || userObj.verificationStatus === "Pending")) {
       userObj.verificationStatus = null;
     }
 
